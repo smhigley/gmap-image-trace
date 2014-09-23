@@ -7,58 +7,115 @@
 *
 */
 
-var line;
-function initialize() {
-    var latlng = new google.maps.LatLng(48.6, -19.8);
-    var myOptions = {
-      zoom: 3,
-      center: latlng,
-      mapTypeId: google.maps.MapTypeId.ROADMAP
+;(function ( $, window, document, undefined ) {
+
+    // Create the defaults once
+    var pluginName = "GmapImageTrace",
+        defaults = {
+          image: "",
+          imageLat: null,
+          imageLong: null
+        };
+
+    // The actual plugin constructor
+    function GmapImageTrace( element, options ) {
+        this.$el = $(element);
+
+        this.options = $.extend( {}, defaults, options);
+        this._defaults = defaults;
+        this._name = pluginName;
+
+        this.init();
+    }
+
+    GmapImageTrace.prototype = {
+
+        init: function() {
+          var latlng = new google.maps.LatLng(48.6, -19.8),
+              self = this;
+
+          // set some vars we'll need to access later
+          this._polygon = null;
+          this._plotActive = false;
+
+          // add necessary elements
+          this.createControls();
+
+          var myOptions = {
+            zoom: 3,
+            center: latlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          };
+
+          var map = new google.maps.Map(self.$map_canvas[0], myOptions);
+
+          this._polygon = new google.maps.Polyline({
+              strokeColor: '#ff0000',
+              strokeOpacity: 1.0,
+              strokeWeight: 2
+            });
+
+          this._polygon.setMap(map);
+
+          // add click event to map
+          google.maps.event.addListener(map, 'click', self.addNewPoint.bind(self));
+
+          // add click event to controls
+          this.$start_button.on('click', self.startPlot.bind(self));
+          this.$remove_button.on('click', self.removeLastPoint.bind(self));
+        },
+
+        createControls: function() {
+          this.$map_canvas = $('<div class="map-canvas" />');
+          this.$start_button = $('<a href="#" class="start-btn">Start Plot</a>');
+          this.$remove_button = $('<a href="#" class="remove-btn">Remove Last</a>');
+          this.$output_button = $('<a href="#" class="output-btn">Show Output</a>');
+          this.$output = $('<div class="output" />');
+
+          var $controls = $('<div class="controls" />');
+          $controls.append(self.$start_button, self.$remove_button, self.$output_button);
+          this.$el.append(self.$map_canvas, $controls, self.$output);
+        }
+
+        addNewPoint: function(e) {
+          // only add points if the plot is active
+          if (this._plotActive == true) {
+            // add lat/long to polygon path
+            var path = this._polygon.getPath();
+            path.push(e.latLng);
+
+            // add lat/long to output
+            this.$output.append('<span>'+point+'</span>');
+          }
+        },
+
+        removeLastPoint: function() {
+          // remove last point from polygon path
+          var path = this._polygon.getPath();
+            path.pop();
+
+          // remove last span from output
+          this.$output.chilren('span').last().remove();
+        },
+
+        startPlot: function() {
+          if (this._plotActive == false) {
+            this._plotActive = true;
+            this.$start_button.html('Stop Plot');
+          } else {
+            this.$start_button.html('Start Plot');
+            this._plotActive = false;
+          }
+        }
     };
-    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
-    line = new google.maps.Polyline({
-        strokeColor: '#ff0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 2
-      });
+    $.fn.gmapImageTrace = function ( options ) {
+        return this.each(function () {
+            if (!$.data(this, "plugin_" + pluginName)) {
+                $.data(this, "plugin_" + pluginName,
+                new GmapImageTrace( this, options ));
+            }
+        });
+    };
 
-    var path = [new google.maps.LatLng(55, 12),
-                new google.maps.LatLng(56, 12)
-                ];
-
-      line.setMap(map);
-
-      google.maps.event.addListener(map, 'click', addNewPoint);
-}
-function addNewPoint(e) {
-	if (plotActive==true) {
-		var path = line.getPath();
-		path.push(e.latLng);
-		newPointShow(e.latLng);
-		lastPoint = e.LatLng;
-	}
-}
-
-function newPointShow(point) {
-	$('#pointsPanel').append('<span>'+point+'</span>'+'<br />');
-}
-
-function removeLastPoint() {
-	$('#pointsPanel>span:last').remove();
-	$('#pointsPanel>br:last').remove();
-	var path = line.getPath();
-	  path.pop();
-}
-
-var plotActive = false;
-
-function startPlot() {
-	if (plotActive==false) {
-		plotActive = true;
-		$('#plotter').attr('value', 'Stop Plot');
-	} else {
-		$('#plotter').attr('value', 'Start Plot');
-		plotActive = false;
-	}
-}
+})( jQuery, window, document );

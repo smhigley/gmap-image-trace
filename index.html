@@ -6,12 +6,30 @@
 <style type="text/css">
   html { height: 100% }
   body { height: 100%; margin: 0px; padding: 0px }
-  #map_canvas { height: 90%; width: 100%; }
-  #pointsPanel { width: 100%; }
-  #customUI {
-  position: absolute;
-  top: 2%;
-  left: 45%;
+  #map-tracer, .map-canvas { height: 100%; width: 100%; }
+  .controls {
+    position: absolute;
+    top: 2%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+  }
+  .controls a {
+    display: inline-block;
+    background-color: #fff;
+    border-radius: 5px;
+    color: #1F6980;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    text-decoration: none;
+    margin: 0 5px;
+    padding: 5px 8px 4px;
+  }
+  .controls a:hover {
+    color: #fff;
+    background-color: #1F6980;
   }
 </style>
 <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
@@ -21,12 +39,12 @@
 <title>GMaps tool to trace images to lat/long coordinates</title>
 
 </head>
-<body onload="initialize()">
-<div id="map_canvas"></div>
-<div id="customUI">
-	<input id="plotter" type="button" value="Start Plot" onclick="startPlot()" />
-	<input type="button" value="remove last" onclick="removeLastPoint()" />
-</div>
-<div id="pointsPanel"></div>
+<body>
+  <div id="map-tracer"></div>
+
+<script type="text/javascript">
+  $('#map-tracer').gmapImageTrace();
+</script>
+
 </body>
 </html>
