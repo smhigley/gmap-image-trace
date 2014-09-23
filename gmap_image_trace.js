@@ -16,7 +16,13 @@
           north: null,
           south: null,
           east: null,
-          west: null
+          west: null,
+          styles: [{
+            stylers: [
+              { hue: "#2f563c" },
+              { saturation: -50 }
+            ]
+          }]
         };
 
     // The actual plugin constructor
@@ -54,7 +60,8 @@
           this.map = new google.maps.Map(self.$map_canvas[0], {
             zoom: 11,
             center: new google.maps.LatLng(centerLat, centerLong),
-            mapTypeId: google.maps.MapTypeId.ROADMAP
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            styles: this.options.styles
           });
 
           // add image overlay
@@ -74,6 +81,10 @@
           // add click event to controls
           this.$start_button.on('click', self.startPlot.bind(self));
           this.$remove_button.on('click', self.removeLastPoint.bind(self));
+          this.$output_button.on('click', function(e) {
+            e.preventDefault();
+            self.$output.toggleClass('open');
+          })
         },
 
         createControls: function() {
