@@ -13,8 +13,10 @@
     var pluginName = "GmapImageTrace",
         defaults = {
           image: "",
-          imageLat: null,
-          imageLong: null
+          north: null,
+          south: null,
+          east: null,
+          west: null
         };
 
     // The actual plugin constructor
@@ -25,14 +27,16 @@
         this._defaults = defaults;
         this._name = pluginName;
 
+        // we'll need this later
+        this.map = null;
+
         this.init();
     }
 
     GmapImageTrace.prototype = {
 
         init: function() {
-          var latlng = new google.maps.LatLng(48.6, -19.8),
-              self = this;
+          var self = this;
 
           // set some vars we'll need to access later
           this._polygon = null;
@@ -41,24 +45,31 @@
           // add necessary elements
           this.createControls();
 
-          var myOptions = {
-            zoom: 3,
-            center: latlng,
-            mapTypeId: google.maps.MapTypeId.ROADMAP
-          };
+          // process the north/south/east/west values
+          var centerLat = (this.options.north + this.options.south)/2,
+              centerLong = (this.options.east + this.options.west)/2,
+              sw = new google.maps.LatLng(this.options.south, this.options.west),
+              ne = new google.maps.LatLng(this.options.north, this.options.east);
 
-          var map = new google.maps.Map(self.$map_canvas[0], myOptions);
+          this.map = new google.maps.Map(self.$map_canvas[0], {
+            zoom: 11,
+            center: new google.maps.LatLng(centerLat, centerLong),
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          });
+
+          // add image overlay
+          this.addImageOverlay(this.options.image, ne, sw);
 
           this._polygon = new google.maps.Polyline({
-              strokeColor: '#ff0000',
+              strokeColor: '#FA5C43',
               strokeOpacity: 1.0,
               strokeWeight: 2
             });
 
-          this._polygon.setMap(map);
+          this._polygon.setMap(this.map);
 
           // add click event to map
-          google.maps.event.addListener(map, 'click', self.addNewPoint.bind(self));
+          google.maps.event.addListener(this.map, 'click', self.addNewPoint.bind(self));
 
           // add click event to controls
           this.$start_button.on('click', self.startPlot.bind(self));
@@ -73,9 +84,11 @@
           this.$output = $('<div class="output" />');
 
           var $controls = $('<div class="controls" />');
-          $controls.append(self.$start_button, self.$remove_button, self.$output_button);
-          this.$el.append(self.$map_canvas, $controls, self.$output);
-        }
+          $controls.append(this.$start_button, this.$remove_button, this.$output_button);
+          this.$el.append(this.$map_canvas, $controls, this.$output);
+        },
+
+        // plotting fns
 
         addNewPoint: function(e) {
           // only add points if the plot is active
@@ -85,7 +98,7 @@
             path.push(e.latLng);
 
             // add lat/long to output
-            this.$output.append('<span>'+point+'</span>');
+            this.$output.append('<span>'+ e.latLng +'</span>');
           }
         },
 
@@ -99,6 +112,8 @@
         },
 
         startPlot: function() {
+          this.$el.toggleClass('active');
+
           if (this._plotActive == false) {
             this._plotActive = true;
             this.$start_button.html('Stop Plot');
@@ -106,6 +121,44 @@
             this.$start_button.html('Start Plot');
             this._plotActive = false;
           }
+        },
+
+        // function to add image overlay
+        addImageOverlay: function(src, ne, sw) {
+          var overlay = new google.maps.OverlayView(),
+              bounds = new google.maps.LatLngBounds(sw, ne),
+              img_container = document.createElement('div'),
+              img = document.createElement('img');
+
+          // add overlay fn
+          overlay.onAdd = function() {
+            var layer = this.getPanes().overlayLayer;
+
+            img_container.className = 'image-overlay';
+            img.src = src;
+
+            img_container.appendChild(img);
+            layer.appendChild(img_container);
+            layer.className = "test-class";
+
+            // draw (every time the map is moved or resized)
+            overlay.draw = function() {
+              // get pixel values of bounds on map
+              var projection = this.getProjection(),
+                  swPix = projection.fromLatLngToDivPixel(sw),
+                  nePix = projection.fromLatLngToDivPixel(ne);
+
+              // move image div to that location
+              $(img_container).css({
+                top: nePix.y + 'px',
+                left: swPix.x + 'px',
+                width: (nePix.x - swPix.x) + 'px',
+                height: (swPix.y - nePix.y) + 'px'
+              });
+            };
+          };
+
+          overlay.setMap(this.map);
         }
     };
 

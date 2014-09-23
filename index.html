@@ -7,6 +7,9 @@
   html { height: 100% }
   body { height: 100%; margin: 0px; padding: 0px }
   #map-tracer, .map-canvas { height: 100%; width: 100%; }
+  #map-tracer.active, #map-tracer.active div {
+    cursor: pointer;
+  }
   .controls {
     position: absolute;
     top: 2%;
@@ -31,6 +34,17 @@
     color: #fff;
     background-color: #1F6980;
   }
+  .image-overlay {
+    position: absolute;
+    opacity: 0.75;
+  }
+  .image-overlay img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 </style>
 <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
@@ -43,7 +57,13 @@
   <div id="map-tracer"></div>
 
 <script type="text/javascript">
-  $('#map-tracer').gmapImageTrace();
+  $('#map-tracer').gmapImageTrace({
+    image: 'map_regions.png',
+    north: 38.057,
+    south: 37.3899,
+    east: -85.648,
+    west: -86.3041
+  });
 </script>
 
 </body>
