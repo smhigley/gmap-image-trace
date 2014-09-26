@@ -119,7 +119,7 @@
             path.pop();
 
           // remove last span from output
-          this.$output.chilren('span').last().remove();
+          this.$output.children('span').last().remove();
         },
 
         startPlot: function() {
